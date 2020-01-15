@@ -10,7 +10,7 @@
         [STAThread]
         private static void Main()
         {
-            using (new Mutex(true, Resources.AssemblyGuid, out bool newInstance))
+            using (new Mutex(true, Resources.AssemblyGuid, out var newInstance))
             {
                 if (!newInstance)
                     return;

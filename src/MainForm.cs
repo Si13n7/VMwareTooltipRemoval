@@ -2,15 +2,14 @@
 {
     using System;
     using System.Collections.Generic;
-#if DEBUG
-    using System.Diagnostics;
-#endif
     using System.Drawing;
     using System.IO;
     using System.Windows.Forms;
     using Properties;
     using SilDev;
     using SilDev.Forms;
+    using SilDev.Investment;
+    using SilDev.Media;
 
     public partial class MainForm : Form
     {
@@ -25,16 +24,18 @@
         }
 
         private static string LibDir { get; } = PathEx.Combine(Reg.ReadString(Environment.Is64BitOperatingSystem ? Resources.VMwareRegistryPath64 : Resources.VMwareRegistryPath, Resources.VMwareRegistryKey));
+
         private static string LibPath { get; set; } = Path.Combine(LibDir, Resources.VMwareCoreLibraryName);
+
+        private static Random RandomDefault { get; } = new RandomInvestor().GetGenerator();
 
         private void MainForm_Load(object sender, EventArgs e)
         {
-            var random = new Random();
-            HeaderLabel.EnableDragMove();
-            DemoBox.EnableDragMove();
+            ControlEx.EnableDragMove(HeaderLabel);
+            ControlEx.EnableDragMove(DemoBox);
             DemoBox.SetControlStyle((ControlStyles)(0x1 | 0x2 | 0x10 | 0x800 | 0x2000 | 0x20000));
-            Media.IrrKlangPlayer.Play(Initializer.TrackPath, true, 25);
-            WinApi.NativeHelper.AnimateWindow(Handle, 400, (WinApi.AnimateWindowFlags)(random.Next(150) < 50 ? 0x10 : 0x40000 | (random.Next(100) < 50 ? 0x8 : 0x4)));
+            IrrKlangPlayer.Play(Initializer.TrackPath, true, 25);
+            WinApi.NativeHelper.AnimateWindow(Handle, 400, (WinApi.AnimateWindowFlags)(RandomDefault.Next(150) < 50 ? 0x10 : 0x40000 | (RandomDefault.Next(100) < 50 ? 0x8 : 0x4)));
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -74,18 +75,11 @@
                 DemoBox.Image = _graphics[$"{_count}"];
                 _count = _count < _graphics.Count - 1 ? _count + 1 : 0;
             }
-#if DEBUG
-            catch (Exception ex)
+            catch (Exception ex) when (ex.IsCaught())
             {
-                Debug.Write(ex.ToString());
-            }
-#else
-            catch
-            {
-                Environment.ExitCode = 1;
+                Environment.ExitCode++;
                 Environment.Exit(Environment.ExitCode);
             }
-#endif
         }
 
         private void WriteCheck()
@@ -97,37 +91,42 @@
                 Elevation.RestartAsAdministrator();
         }
 
-        private void SetPath()
+        private bool SetPath()
         {
             if (File.Exists(LibPath))
-                return;
+                return true;
             MessageBoxEx.Show(this, Resources.Msg_InfoSelection, Resources.MsgTitle_Info, MessageBoxButtons.OK, MessageBoxIcon.Information);
-            using (var dialog = new FolderBrowserDialog())
+            using var dialog = new FolderBrowserDialog
             {
-                dialog.ShowNewFolderButton = false;
-                dialog.ShowDialog(new Form
-                {
-                    ShowIcon = false,
-                    TopMost = true
-                });
-                if (string.IsNullOrWhiteSpace(dialog.SelectedPath))
-                    return;
-                if (!File.Exists(Path.Combine(dialog.SelectedPath, Resources.VMwareCoreLibraryName)))
-                {
-                    MessageBoxEx.Show(this, Resources.Msg_WarnFileNotFound, Resources.MsgTitle_Warn, MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-                LibPath = dialog.SelectedPath;
+                ShowNewFolderButton = false
+            };
+            dialog.ShowDialog(new Form
+            {
+                ShowIcon = false,
+                TopMost = true
+            });
+            if (string.IsNullOrWhiteSpace(dialog.SelectedPath))
+                return false;
+            if (!File.Exists(Path.Combine(dialog.SelectedPath, Resources.VMwareCoreLibraryName)))
+            {
+                MessageBoxEx.Show(this, Resources.Msg_WarnFileNotFound, Resources.MsgTitle_Warn, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
             }
+            LibPath = dialog.SelectedPath;
+            return File.Exists(LibPath);
         }
 
         private void PatchBtn_Click(object sender, EventArgs e)
         {
-            SetPath();
+            if (!SetPath())
+            {
+                MessageBoxEx.Show(this, Resources.Msg_InfoCanceled, Resources.MsgTitle_Info, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
             WriteCheck();
             var oldValue = new byte[] { 0x40, 0x26, 0x21, 0x2a, 0x40, 0x2a, 0x40 };
             var newValue = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-            var completed = Data.BinaryReplace(LibPath, oldValue, newValue);
+            var completed = FileEx.BinaryReplace(LibPath, oldValue, newValue);
             switch (completed)
             {
                 case false:
@@ -141,7 +140,11 @@
 
         private void RestoreBtn_Click(object sender, EventArgs e)
         {
-            SetPath();
+            if (!SetPath())
+            {
+                MessageBoxEx.Show(this, Resources.Msg_InfoCanceled, Resources.MsgTitle_Info, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
             WriteCheck();
             if (!File.Exists(LibPath))
                 return;
@@ -159,21 +162,21 @@
                 }
                 MessageBoxEx.Show(this, Resources.Msg_InfoCompleted, Resources.MsgTitle_Info, MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
-            catch
+            catch (Exception ex) when (ex.IsCaught())
             {
                 MessageBoxEx.Show(this, Resources.Msg_WarnFailed, Resources.MsgTitle_Warn, MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
         private void SlideDemo_Tick(object sender, EventArgs e) =>
-            SlideText.Left = (int)(SlideText.Left <= SlideText.Width * -1 ? SlideText.Width / 2d + Width / (Math.PI / 1.5d) : (SlideText.Left -= 1 * 1));
+            SlideText.Left = (int)(SlideText.Left <= SlideText.Width * -1 ? SlideText.Width / 2d + Width / (Math.PI / 1.5d) : SlideText.Left -= 1 * 1);
 
         private void SlideDemoGlow_Tick(object sender, EventArgs e)
         {
             if (SlideText.ForeColor == Color.DarkGray)
             {
                 SlideText.ForeColor = Color.Gainsboro;
-                SlideDemoGlow.Interval = new Random().Next(20, 80);
+                SlideDemoGlow.Interval = RandomDefault.Next(20, 80);
             }
             else
             {

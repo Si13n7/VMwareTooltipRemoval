@@ -19,7 +19,7 @@ namespace Patcher.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -61,7 +61,7 @@ namespace Patcher.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 9fa06067-b45c-49da-9c6b-43c360df36ff.
+        ///   Looks up a localized string similar to 27f5c44a-4149-4be6-a20c-503b9635c1c2.
         /// </summary>
         internal static string AssemblyGuid {
             get {
@@ -79,7 +79,7 @@ namespace Patcher.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to SilDev.CSharpLib.dll.
+        ///   Looks up a localized string similar to SilDev.CSharpLib32.dll.
         /// </summary>
         internal static string CoreLibraryName {
             get {
@@ -113,6 +113,15 @@ namespace Patcher.Properties {
             get {
                 object obj = ResourceManager.GetObject("Graphics", resourceCulture);
                 return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Operation canceled..
+        /// </summary>
+        internal static string Msg_InfoCanceled {
+            get {
+                return ResourceManager.GetString("Msg_InfoCanceled", resourceCulture);
             }
         }
         
@@ -158,6 +167,15 @@ namespace Patcher.Properties {
         internal static string Msg_WarnWritePermission {
             get {
                 return ResourceManager.GetString("Msg_WarnWritePermission", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error.
+        /// </summary>
+        internal static string MsgTitle_Error {
+            get {
+                return ResourceManager.GetString("MsgTitle_Error", resourceCulture);
             }
         }
         

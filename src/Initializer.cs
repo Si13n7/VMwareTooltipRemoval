@@ -6,75 +6,71 @@
     using System.IO.Compression;
     using System.Linq;
     using System.Reflection;
+    using System.Windows.Forms;
     using Properties;
 
     internal static class Initializer
     {
-        private static readonly string AssemblyDir = Path.Combine(Path.GetTempPath(), $"patcher-{Resources.AssemblyGuid}");
-        private static string LocalPath => new Uri(Assembly.GetEntryAssembly().CodeBase).LocalPath;
-        private static string LocalDir => Path.GetDirectoryName(LocalPath)?.TrimEnd(Path.DirectorySeparatorChar);
-        internal static string TrackPath => Path.Combine(AssemblyDir, "music", Resources.TrackName);
+        private static string AssemblyDir { get; } = Path.Combine(Path.GetTempPath(), $"patcher-{Resources.AssemblyGuid}");
+
+        private static string LocalPath { get; } = new Uri(Assembly.GetEntryAssembly()?.CodeBase ?? throw new NullReferenceException()).LocalPath;
+
+        private static string LocalDir { get; } = Path.GetDirectoryName(LocalPath)?.TrimEnd(Path.DirectorySeparatorChar);
+
+        internal static string TrackPath { get; } = Path.Combine(AssemblyDir, "music", Resources.TrackName);
 
         internal static void Initialize(byte[] resData)
         {
             try
             {
-                if (!LocalPath.Equals(AssemblyDir))
+                if (!LocalDir.Equals(AssemblyDir, StringComparison.OrdinalIgnoreCase))
                 {
                     var path = $"{AssemblyDir}.zip";
                     if (string.IsNullOrEmpty(path))
-                        throw new ArgumentNullException(nameof(path));
+                        throw new NullReferenceException();
                     var dir = AssemblyDir;
                     if (string.IsNullOrEmpty(dir))
-                        throw new ArgumentNullException(nameof(dir));
+                        throw new NullReferenceException();
                     if (File.Exists(path))
                         File.Delete(path);
                     using (var ms = new MemoryStream(resData))
                     {
-                        var data = ms.ToArray();
-                        data = data.Reverse().ToArray();
-                        using (var fs = new FileStream(path, FileMode.CreateNew, FileAccess.Write))
-                            fs.Write(data, 0, data.Length);
+                        var data = ms.ToArray().Reverse().ToArray();
+                        using var fs = new FileStream(path, FileMode.Create, FileAccess.Write);
+                        fs.Write(data, 0, data.Length);
                     }
                     Unzip(path, dir);
-                    File.Copy(LocalPath, Path.Combine(AssemblyDir, Resources.AssemblyName));
+                    path = Path.Combine(AssemblyDir, Resources.AssemblyName);
+                    if (File.Exists(path))
+                        File.Delete(path);
+                    File.Copy(LocalPath, path);
                 }
             }
-#if DEBUG
             catch (Exception ex)
             {
-                Debug.Write(ex.ToString());
+                Environment.ExitCode++;
+                MessageBox.Show(ex.Message, Resources.MsgTitle_Error, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-#else
-            catch
-            {
-                // ignored
-            }
-#endif
             var core = Path.Combine(LocalDir, "x86", Resources.CoreLibraryName);
             if (!File.Exists(core))
             {
                 try
                 {
-                    using (var p = new Process())
+                    using var process = new Process
                     {
-                        p.StartInfo.FileName = Path.Combine(AssemblyDir, Resources.AssemblyName);
-                        p.StartInfo.WorkingDirectory = AssemblyDir;
-                        p.Start();
-                    }
+                        StartInfo =
+                        {
+                            FileName = Path.Combine(AssemblyDir, Resources.AssemblyName),
+                            WorkingDirectory = AssemblyDir
+                        }
+                    };
+                    process.Start();
                 }
-#if DEBUG
                 catch (Exception ex)
                 {
-                    Debug.Write(ex.ToString());
+                    Environment.ExitCode++;
+                    MessageBox.Show(ex.Message, Resources.MsgTitle_Error, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-#else
-                catch
-                {
-                    // ignored
-                }
-#endif
-                Environment.ExitCode = 0;
                 Environment.Exit(Environment.ExitCode);
             }
             try
@@ -89,23 +85,20 @@
                     FileName = path,
                     WindowStyle = ProcessWindowStyle.Hidden
                 };
-                AppDomain.CurrentDomain.ProcessExit += (s, e) =>
+                AppDomain.CurrentDomain.ProcessExit += (sender, args) =>
                 {
-                    using (var p = new Process { StartInfo = psi })
-                        p.Start();
+                    using var process = new Process
+                    {
+                        StartInfo = psi
+                    };
+                    process.Start();
                 };
             }
-#if DEBUG
             catch (Exception ex)
             {
-                Debug.Write(ex.ToString());
+                Environment.ExitCode++;
+                MessageBox.Show(ex.Message, Resources.MsgTitle_Error, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-#else
-            catch
-            {
-                // ignored
-            }
-#endif
         }
 
         private static void Unzip(string srcPath, string destDir)
@@ -141,30 +134,18 @@
                             }
                             ent.ExtractToFile(entPath, true);
                         }
-#if DEBUG
                         catch (Exception ex)
                         {
-                            Debug.Write(ex.ToString());
+                            Environment.ExitCode++;
+                            MessageBox.Show(ex.Message, Resources.MsgTitle_Error, MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
-#else
-                        catch
-                        {
-                            // ignored
-                        }
-#endif
                 File.Delete(src);
             }
-#if DEBUG
             catch (Exception ex)
             {
-                Debug.Write(ex.ToString());
+                Environment.ExitCode++;
+                MessageBox.Show(ex.Message, Resources.MsgTitle_Error, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-#else
-            catch
-            {
-                // ignored
-            }
-#endif
         }
     }
 }

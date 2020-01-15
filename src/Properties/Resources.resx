@@ -128,22 +128,28 @@
     <value>..\Resources\graphics.dat;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
   <data name="AssemblyGuid" xml:space="preserve">
-    <value>9fa06067-b45c-49da-9c6b-43c360df36ff</value>
+    <value>27f5c44a-4149-4be6-a20c-503b9635c1c2</value>
   </data>
   <data name="AssemblyName" xml:space="preserve">
     <value>VMwareTooltipRemoval.exe</value>
   </data>
   <data name="CoreLibraryName" xml:space="preserve">
-    <value>SilDev.CSharpLib.dll</value>
+    <value>SilDev.CSharpLib32.dll</value>
   </data>
   <data name="DelayedRmDir" xml:space="preserve">
     <value>/c ping LOCALHOST -n 3 &amp;&amp; rd /s /q "{0}"</value>
+  </data>
+  <data name="MsgTitle_Error" xml:space="preserve">
+    <value>Error</value>
   </data>
   <data name="MsgTitle_Info" xml:space="preserve">
     <value>Information</value>
   </data>
   <data name="MsgTitle_Warn" xml:space="preserve">
     <value>Warning</value>
+  </data>
+  <data name="Msg_InfoCanceled" xml:space="preserve">
+    <value>Operation canceled.</value>
   </data>
   <data name="Msg_InfoCompleted" xml:space="preserve">
     <value>Operation successfully completed.</value>
