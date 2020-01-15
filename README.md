@@ -10,7 +10,7 @@ This simple tool searches for the VMware Player Core Library to replace all occu
 
 ### Requirements:
 - Microsoft Windows 7 or higher
-- [Microsoft .NET Framework Version 4.6+](https://www.microsoft.com/download/details.aspx?id=48130)
+- [Microsoft .NET Framework Version 4.7+](https://www.microsoft.com/download/details.aspx?id=55170)
 - [Microsoft VMware Workstation Player](https://my.vmware.com/web/vmware/free#desktop_end_user_computing/vmware_workstation_player/12_0)
 
 ### Requirements (Developer):
